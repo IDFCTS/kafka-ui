@@ -22,11 +22,10 @@ import Fts from 'components/common/Fts/Fts';
 import { DownloadCsvButton } from 'components/common/DownloadCsvButton/DownloadCsvButton';
 import { consumerGroupsApiClient } from 'lib/api';
 import { RefreshRateSelect } from 'components/common/RefreshRateSelect/RefreshRateSelect';
-import useQueryPersister from 'components/common/NewTable/ColumnFilter/lib/persisters/queryPersister';
 import PageLoader from 'components/common/PageLoader/PageLoader';
 import ErrorPage from 'components/ErrorPage/ErrorPage';
-import { LagTrendComponent } from 'lib/consumerGroups';
-import { useConsumerGroupsLagTrends } from 'components/ConsumerGroups/lib/useConsumerGroupsLagTrends';
+
+import { LagContainer } from './styled';
 
 const List = () => {
   const { clusterName } = useAppParams<ClusterNameRoute>();
@@ -163,9 +162,11 @@ const List = () => {
         />
         <RefreshRateSelect storageKey="consumer-groups-refresh-rate" />
       </ControlPanelWrapper>
+
       {(consumerGroups.isLoading || consumerGroups.isRefetching) && (
         <PageLoader offsetY={300} />
       )}
+
       {consumerGroups.error && (
         <ErrorPage
           offsetY={300}
@@ -174,11 +175,11 @@ const List = () => {
           text={consumerGroups.error.message}
         />
       )}
+
       {consumerGroups.isSuccess && (
         <Table
           columns={columns}
           pageCount={consumerGroups.data?.pageCount || 0}
-          filterPersister={filterPersister}
           data={consumerGroups.data?.consumerGroups || []}
           emptyMessage="No active consumer groups found"
           serverSideProcessing

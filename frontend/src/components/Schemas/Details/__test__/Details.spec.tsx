@@ -64,6 +64,7 @@ describe('Details', () => {
           data: versionPayload,
           isFetching: false,
           isError: false,
+          isSuccess: true,
         }));
         (useGetLatestSchema as jest.Mock).mockImplementation(() => ({
           data: schemaVersionWithTopic,
