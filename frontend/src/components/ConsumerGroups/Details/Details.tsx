@@ -28,6 +28,11 @@ import { Button } from 'components/common/Button/Button';
 import ExportIcon from 'components/common/Icons/ExportIcon';
 import PageLoader from 'components/common/PageLoader/PageLoader';
 import ErrorPage from 'components/ErrorPage/ErrorPage';
+import { getConnectorNameFromConsumerGroup } from 'lib/utils/connectorUtils';
+import { LagTrendComponent } from 'lib/consumerGroups';
+import { RefreshRateSelect } from 'components/common/RefreshRateSelect/RefreshRateSelect';
+import { useConnectors } from 'lib/hooks/api/kafkaConnect';
+import { useGetConsumerGroupLagsInfo } from 'components/ConsumerGroups/Details/useGetConsumerGroupLagsInfo';
 
 import { TopicsTable } from './TopicsTable/TopicsTable';
 
@@ -46,7 +51,6 @@ const Details: React.FC = () => {
     isSuccess,
     refetch,
     isLoading,
-    isRefetching,
   } = useConsumerGroupDetails(routeParams);
   const deleteConsumerGroup = useDeleteConsumerGroupMutation(routeParams);
 
@@ -132,7 +136,7 @@ const Details: React.FC = () => {
               </ResourcePageHeading>
             </div>
 
-            {(isLoading || isRefetching) && <PageLoader />}
+            {isLoading && <PageLoader />}
 
             {error && (
               <ErrorPage
@@ -174,15 +178,38 @@ const Details: React.FC = () => {
                       {consumerGroup?.coordinator?.id}
                     </Metrics.Indicator>
                     <Metrics.Indicator label="Total lag">
-                      {consumerGroup?.consumerLag}
+                      <LagTrendComponent
+                        lag={consumerGroupLagInfo.lag}
+                        trend={consumerGroupLagInfo.trend}
+                      />
                     </Metrics.Indicator>
+                    {connectorName && connector && (
+                      <Metrics.Indicator label="Connector">
+                        <Link
+                          to={clusterConnectConnectorPath(
+                            clusterName,
+                            connector.connect,
+                            connectorName
+                          )}
+                        >
+                          {connectorName}
+                        </Link>
+                      </Metrics.Indicator>
+                    )}
                   </Metrics.Section>
                 </Metrics.Wrapper>
                 <ControlPanelWrapper hasInput style={{ margin: '16px 0 20px' }}>
                   <Search placeholder="Search by Topic Name" />
-                </ControlPanelWrapper>
 
-                <TopicsTable partitions={consumerGroup?.partitions ?? []} />
+                  <RefreshRateSelect
+                    storageKey={`consumer-group-${consumerGroupID}-refresh-rate`}
+                  />
+                </ControlPanelWrapper>
+                <TopicsTable
+                  partitions={consumerGroup?.partitions ?? []}
+                  topicsLagInfo={topicsLagInfo}
+                  partitionsLagInfo={partitionsLagInfo}
+                />
               </>
             )}
           </>

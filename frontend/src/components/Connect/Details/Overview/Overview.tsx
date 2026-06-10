@@ -5,6 +5,8 @@ import { Button } from 'components/common/Button/Button';
 import { Modal } from 'components/common/Modal';
 import getTagColor from 'components/common/Tag/getTagColor';
 import { Connector, ConnectorState, Task } from 'generated-sources';
+import { clusterConsumerGroupDetailsPath } from 'lib/paths';
+import { Link, useParams } from 'react-router-dom';
 
 import getTaskMetrics from './getTaskMetrics';
 import * as S from './Overview.styled';
@@ -14,6 +16,7 @@ const Overview: React.FC<{ tasks: Task[]; connector: Connector }> = ({
   connector,
 }) => {
   const [showTraceModal, setShowTraceModal] = useState(false);
+  const { clusterName } = useParams<{ clusterName: string }>();
 
   const { running, failed } = getTaskMetrics(tasks);
 

@@ -287,33 +287,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateProducerAcl'
-  /api/clusters/{clusterName}/acls/streamapp:
-    post:
-      operationId: createStreamAppAcl
-      summary: createStreamAppAcl
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: 'There is no content to send for this request, but the headers may be useful. '
-        '400':
-          description: The server could not understand the request due to invalid syntax.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-      tags:
-        - Acls
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateStreamAppAcl'
   /api/clusters/{clusterName}/brokers:
     get:
       operationId: getBrokers
@@ -3306,6 +3279,29 @@ components:
                             type: string
                           password:
                             type: string
+                          oauth:
+                            type: object
+                            properties:
+                              tokenUrl:
+                                type: string
+                              clientId:
+                                type: string
+                              clientSecret:
+                                type: string
+                              scopes:
+                                type: array
+                                items:
+                                  type: string
+                              tokenCacheEnabled:
+                                type: boolean
+                                default: true
+                              tokenRefreshBuffer:
+                                type: string
+                                format: duration
+                              maxRetries:
+                                type: integer
+                                format: int32
+                                default: 1
                       schemaRegistrySsl:
                         type: object
                         properties:

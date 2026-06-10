@@ -22,10 +22,11 @@ import Fts from 'components/common/Fts/Fts';
 import { DownloadCsvButton } from 'components/common/DownloadCsvButton/DownloadCsvButton';
 import { consumerGroupsApiClient } from 'lib/api';
 import { RefreshRateSelect } from 'components/common/RefreshRateSelect/RefreshRateSelect';
+import useQueryPersister from 'components/common/NewTable/ColumnFilter/lib/persisters/queryPersister';
 import PageLoader from 'components/common/PageLoader/PageLoader';
 import ErrorPage from 'components/ErrorPage/ErrorPage';
-
-import { LagContainer } from './styled';
+import { LagTrendComponent } from 'lib/consumerGroups';
+import { useConsumerGroupsLagTrends } from 'components/ConsumerGroups/lib/useConsumerGroupsLagTrends';
 
 const List = () => {
   const { clusterName } = useAppParams<ClusterNameRoute>();
@@ -180,6 +181,7 @@ const List = () => {
         <Table
           columns={columns}
           pageCount={consumerGroups.data?.pageCount || 0}
+          filterPersister={filterPersister}
           data={consumerGroups.data?.consumerGroups || []}
           emptyMessage="No active consumer groups found"
           serverSideProcessing

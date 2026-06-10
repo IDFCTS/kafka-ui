@@ -13,6 +13,7 @@ import {
   ConsumerGroupOffsetsReset,
   ConsumerGroupOrdering,
   ConsumerGroupsLagResponse,
+  ConsumerGroupState,
   ConsumerGroupsPageResponse,
   SortOrder,
 } from 'generated-sources';
