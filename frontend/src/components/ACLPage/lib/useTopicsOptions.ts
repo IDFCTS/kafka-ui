@@ -1,8 +1,8 @@
 import { useTopics } from 'lib/hooks/api/topics';
 import { useMemo } from 'react';
 
-const useTopicsOptions = (clusterName: string) => {
-  const { data } = useTopics({ clusterName });
+const useTopicsOptions = (clusterName: string, topicCount?: number) => {
+  const { data } = useTopics({ clusterName, perPage: topicCount });
   const topics = useMemo(() => {
     return (
       data?.topics?.map((topic) => {

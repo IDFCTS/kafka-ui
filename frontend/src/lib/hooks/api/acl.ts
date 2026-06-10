@@ -11,7 +11,7 @@ import { apiFetch, ServerResponse, showSuccessAlert } from 'lib/errorHandling';
 import {
   CreateConsumerAcl,
   CreateProducerAcl,
-  CreateStreamAppAcl,
+  // CreateStreamAppAcl,
   KafkaAcl,
 } from 'generated-sources';
 
@@ -110,26 +110,26 @@ export function useCreateProducerAcl(clusterName: ClusterName) {
   };
 }
 
-export function useCreateStreamAppAcl(clusterName: ClusterName) {
-  const queryClient = useQueryClient();
-  const mutate = useMutation({
-    mutationFn: (createStreamAppAcl: CreateStreamAppAcl) =>
-      api.createStreamAppAcl({
-        clusterName,
-        createStreamAppAcl,
-      }),
-    onSuccess() {
-      onCreateAclSuccess(queryClient, clusterName);
-    },
-  });
-
-  return {
-    createResource: async (acl: CreateStreamAppAcl) => {
-      return mutate.mutateAsync(acl);
-    },
-    ...mutate,
-  };
-}
+// export function useCreateStreamAppAcl(clusterName: ClusterName) {
+//   const queryClient = useQueryClient();
+//   const mutate = useMutation({
+//     mutationFn: (createStreamAppAcl: CreateStreamAppAcl) =>
+//       api.createStreamAppAcl({
+//         clusterName,
+//         createStreamAppAcl,
+//       }),
+//     onSuccess() {
+//       onCreateAclSuccess(queryClient, clusterName);
+//     },
+//   });
+//
+//   return {
+//     createResource: async (acl: CreateStreamAppAcl) => {
+//       return mutate.mutateAsync(acl);
+//     },
+//     ...mutate,
+//   };
+// }
 
 export function useDeleteAclMutation(clusterName: ClusterName) {
   const queryClient = useQueryClient();

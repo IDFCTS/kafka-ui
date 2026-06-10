@@ -8,4 +8,5 @@ export interface FormValues {
   transactionalId?: string;
   transactionsIdPrefix?: string;
   idempotent: boolean;
+  addAllTopics?: boolean;
 }

@@ -1,8 +1,8 @@
 package io.kafbat.ui.service.acl;
 
-import static org.apache.kafka.common.acl.AclOperation.ALL;
 import static org.apache.kafka.common.acl.AclOperation.CREATE;
 import static org.apache.kafka.common.acl.AclOperation.DESCRIBE;
+import static org.apache.kafka.common.acl.AclOperation.DESCRIBE_CONFIGS;
 import static org.apache.kafka.common.acl.AclOperation.IDEMPOTENT_WRITE;
 import static org.apache.kafka.common.acl.AclOperation.READ;
 import static org.apache.kafka.common.acl.AclOperation.WRITE;
@@ -16,9 +16,10 @@ import static org.apache.kafka.common.resource.ResourceType.TRANSACTIONAL_ID;
 
 import com.google.common.collect.Sets;
 import io.kafbat.ui.config.ClustersProperties;
+import io.kafbat.ui.exception.ValidationException;
 import io.kafbat.ui.model.CreateConsumerAclDTO;
 import io.kafbat.ui.model.CreateProducerAclDTO;
-import io.kafbat.ui.model.CreateStreamAppAclDTO;
+// import io.kafbat.ui.model.CreateStreamAppAclDTO;
 import io.kafbat.ui.model.KafkaCluster;
 import io.kafbat.ui.service.AdminClientService;
 import io.kafbat.ui.service.ReactiveAdminClient;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -49,6 +51,16 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class AclsService {
 
+  private static final Set<ResourceType> CUSTOM_ACL_ALLOWED_RESOURCE_TYPES =
+      Set.of(TOPIC, GROUP, TRANSACTIONAL_ID, CLUSTER);
+
+  private static final Map<ResourceType, Set<AclOperation>> CUSTOM_ACL_ALLOWED_OPERATIONS =
+      Map.of(
+          TOPIC, Set.of(DESCRIBE, CREATE, WRITE, READ, DESCRIBE_CONFIGS),
+          GROUP, Set.of(DESCRIBE, READ),
+          TRANSACTIONAL_ID, Set.of(DESCRIBE, WRITE),
+          CLUSTER, Set.of(DESCRIBE, IDEMPOTENT_WRITE));
+
   private final AdminClientService adminClientService;
   private final ClustersProperties clustersProperties;
 
@@ -66,8 +78,24 @@ public class AclsService {
     }
   }
 
+  private void validateCustomAcl(AclBinding aclBinding) {
+    ResourceType resourceType = aclBinding.pattern().resourceType();
+    AclOperation operation = aclBinding.entry().operation();
+
+    if (!CUSTOM_ACL_ALLOWED_RESOURCE_TYPES.contains(resourceType)) {
+      throw new ValidationException("Custom ACL creation is not allowed for resource type " + resourceType);
+    }
+
+    Set<AclOperation> allowedOps = CUSTOM_ACL_ALLOWED_OPERATIONS.get(resourceType);
+    if (allowedOps == null || !allowedOps.contains(operation)) {
+      throw new ValidationException(
+          "Custom ACL operation " + operation + " is not allowed for resource type " + resourceType);
+    }
+  }
+
   public Mono<Void> createAcl(KafkaCluster cluster, AclBinding aclBinding) {
     validatePrincipal(aclBinding.entry().principal());
+    validateCustomAcl(aclBinding);
     return adminClientService.get(cluster)
         .flatMap(ac -> createAclsWithLogging(ac, List.of(aclBinding)));
   }
@@ -243,53 +271,53 @@ public class AclsService {
     return bindings;
   }
 
-  public Mono<Void> createStreamAppAcl(KafkaCluster cluster, CreateStreamAppAclDTO request) {
-    validatePrincipal(request.getPrincipal());
-    return adminClientService.get(cluster)
-        .flatMap(ac -> createAclsWithLogging(ac, createStreamAppBindings(request)))
-        .then();
-  }
+    // public Mono<Void> createStreamAppAcl(KafkaCluster cluster, CreateStreamAppAclDTO request) {
+    //   validatePrincipal(request.getPrincipal());
+    //   return adminClientService.get(cluster)
+    //       .flatMap(ac -> createAclsWithLogging(ac, createStreamAppBindings(request)))
+    //       .then();
+    // }
 
-  // Read on input topics, Write on output topics
-  // ALL on applicationId-prefixed Groups and Topics
-  private List<AclBinding> createStreamAppBindings(CreateStreamAppAclDTO request) {
-    List<AclBinding> bindings = new ArrayList<>();
-    bindings.addAll(
-        createAllowBindings(
-            TOPIC,
-            List.of(READ),
-            request.getPrincipal(),
-            request.getHost(),
-            null,
-            request.getInputTopics()));
+    // // Read on input topics, Write on output topics
+    // // ALL on applicationId-prefixed Groups and Topics
+    // private List<AclBinding> createStreamAppBindings(CreateStreamAppAclDTO request) {
+    //   List<AclBinding> bindings = new ArrayList<>();
+    //   bindings.addAll(
+    //       createAllowBindings(
+    //           TOPIC,
+    //           List.of(READ),
+    //           request.getPrincipal(),
+    //           request.getHost(),
+    //           null,
+    //           request.getInputTopics()));
 
-    bindings.addAll(
-        createAllowBindings(
-            TOPIC,
-            List.of(WRITE),
-            request.getPrincipal(),
-            request.getHost(),
-            null,
-            request.getOutputTopics()));
+    //   bindings.addAll(
+    //       createAllowBindings(
+    //           TOPIC,
+    //           List.of(WRITE),
+    //           request.getPrincipal(),
+    //           request.getHost(),
+    //           null,
+    //           request.getOutputTopics()));
 
-    bindings.addAll(
-        createAllowBindings(
-            GROUP,
-            List.of(ALL),
-            request.getPrincipal(),
-            request.getHost(),
-            request.getApplicationId(),
-            null));
+    //   bindings.addAll(
+    //       createAllowBindings(
+    //           GROUP,
+    //           List.of(ALL),
+    //           request.getPrincipal(),
+    //           request.getHost(),
+    //           request.getApplicationId(),
+    //           null));
 
-    bindings.addAll(
-        createAllowBindings(
-            TOPIC,
-            List.of(ALL),
-            request.getPrincipal(),
-            request.getHost(),
-            request.getApplicationId(),
-            null));
-    return bindings;
-  }
+    //   bindings.addAll(
+    //       createAllowBindings(
+    //           TOPIC,
+    //           List.of(ALL),
+    //           request.getPrincipal(),
+    //           request.getHost(),
+    //           request.getApplicationId(),
+    //           null));
+    //   return bindings;
+    // }
 
 }

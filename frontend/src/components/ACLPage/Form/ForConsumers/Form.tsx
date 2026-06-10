@@ -1,4 +1,4 @@
-import React, { FC, useContext } from 'react';
+import React, { FC, useContext, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { FormProvider, useForm } from 'react-hook-form';
 import { ClusterName } from 'lib/interfaces/cluster';
@@ -12,6 +12,8 @@ import useTopicsOptions from 'components/ACLPage/lib/useTopicsOptions';
 import useConsumerGroupsOptions from 'components/ACLPage/lib/useConsumerGroupsOptions';
 import ACLFormContext from 'components/ACLPage/Form/AclFormContext';
 import MatchTypeSelector from 'components/ACLPage/Form/components/MatchTypeSelector';
+import Checkbox from 'components/common/Checkbox/Checkbox';
+import { useClusters } from 'lib/hooks/api/clusters';
 
 import formSchema from './schema';
 import { toRequest } from './lib';
@@ -26,10 +28,50 @@ const ForConsumersForm: FC<AclDetailedFormProps> = ({ formRef }) => {
     resolver: yupResolver(formSchema),
   });
 
-  const { setValue } = methods;
+  const { setValue, watch } = methods;
 
-  const onSubmit = async (data: FormValues) => {
+  const addAllTopicsChecked = watch('addAllTopics');
+  const [showTopicsError, setShowTopicsError] = useState(false);
+
+  const { data: clusters } = useClusters();
+  const currentCluster = clusters?.find((c) => c.name === clusterName);
+  const topicCount = currentCluster?.topicCount ?? 0;
+
+  const onSubmit = async (formData: FormValues) => {
     try {
+      const data = { ...formData };
+
+      const selectedTopics = data.topics || [];
+      const { topicsPrefix } = data;
+      const allTopicsSelected =
+        selectedTopics.length === topics.length && topics.length !== 0;
+
+      const { consumerGroups: selectedConsumerGroup } = data;
+      const allConsumerGroupsSelected =
+        selectedConsumerGroup?.length === consumerGroups.length &&
+        consumerGroups.length !== 0;
+
+      if (
+        selectedTopics.length === 0 &&
+        !data.addAllTopics &&
+        !topicsPrefix
+      ) {
+        setShowTopicsError(true);
+        return;
+      }
+
+      setShowTopicsError(false);
+
+      if (allTopicsSelected || data.addAllTopics) {
+        data.topics = [{ value: '*', label: 'All Topics' }];
+        data.topicsPrefix = undefined;
+      }
+
+      if (allConsumerGroupsSelected || data.addAllConsumerGroups) {
+        data.consumerGroups = [{ value: '*', label: 'All Consumer groups' }];
+        data.consumerGroupsPrefix = undefined;
+      }
+
       await create.createResource(toRequest(data));
       context?.close();
     } catch (e) {
@@ -37,8 +79,9 @@ const ForConsumersForm: FC<AclDetailedFormProps> = ({ formRef }) => {
     }
   };
 
-  const topics = useTopicsOptions(clusterName);
-  const consumerGroups = useConsumerGroupsOptions(clusterName);
+  const topics = useTopicsOptions(clusterName, topicCount || 1000);
+  const consumerGroups = useConsumerGroupsOptions(clusterName, 1000);
+  const consumerCount = consumerGroups.length;
 
   const onTopicTypeChange = (value: string) => {
     if (value === MatchType.EXACT) {
@@ -87,6 +130,20 @@ const ForConsumersForm: FC<AclDetailedFormProps> = ({ formRef }) => {
           </S.ControlList>
         </S.Field>
 
+        {topicCount === 0 && (
+          <Checkbox
+            name="addAllTopics"
+            label="Add ACL for all future created topics"
+            hint="Note: You don't have any topics; check this box to add ACLs for future topics"
+          />
+        )}
+        {showTopicsError && !addAllTopicsChecked && (
+          <span style={{ fontSize: '0.9rem', color: '#E51A1A' }}>
+            Please select at least one topic
+          </span>
+        )}
+        <hr />
+
         <S.Field>
           <S.Field>Consumer group(s)</S.Field>
           <S.ControlList>
@@ -104,6 +161,14 @@ const ForConsumersForm: FC<AclDetailedFormProps> = ({ formRef }) => {
             />
           </S.ControlList>
         </S.Field>
+
+        {consumerCount === 0 && (
+          <Checkbox
+            name="addAllConsumerGroups"
+            label="Add ACL for all consumer groups"
+            hint="Note: You don't have any consumer groups; check this box to add ACLs for future created consumer groups"
+          />
+        )}
       </S.Form>
     </FormProvider>
   );

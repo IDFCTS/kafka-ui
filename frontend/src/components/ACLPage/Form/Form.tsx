@@ -9,20 +9,16 @@ import { ACLTypeOptions } from './constants';
 import * as S from './Form.styled';
 import ACLFormContext from './AclFormContext';
 
-const DETAILED_FORM_COMPONENTS: Record<
-  keyof typeof ACLType,
-  FC<AclDetailedFormProps>
-> = {
+type SupportedACLType = Exclude<ACLType, ACLType.FOR_KAFKA_STREAM_APPS>;
+
+const DETAILED_FORM_COMPONENTS: Record<SupportedACLType, FC<AclDetailedFormProps>> = {
   [ACLType.CUSTOM_ACL]: React.lazy(() => import('./CustomACL/Form')),
   [ACLType.FOR_CONSUMERS]: React.lazy(() => import('./ForConsumers/Form')),
   [ACLType.FOR_PRODUCERS]: React.lazy(() => import('./ForProducers/Form')),
-  [ACLType.FOR_KAFKA_STREAM_APPS]: React.lazy(
-    () => import('./ForKafkaStreamApps/Form')
-  ),
 };
 
 const ACLForm: FC<ACLFormProps> = ({ isOpen: open }) => {
-  const [aclType, setAclType] = useState(ACLType.CUSTOM_ACL);
+  const [aclType, setAclType] = useState<SupportedACLType>(ACLType.CUSTOM_ACL);
   const formContext = useContext(ACLFormContext);
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -44,7 +40,7 @@ const ACLForm: FC<ACLFormProps> = ({ isOpen: open }) => {
             selectSize="L"
             value={aclType}
             options={ACLTypeOptions}
-            onChange={(option) => setAclType(option as ACLType)}
+            onChange={(option) => setAclType(option as SupportedACLType)}
           />
         </S.Field>
         <Suspense fallback={<div />}>

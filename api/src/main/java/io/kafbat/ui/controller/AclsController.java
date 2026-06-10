@@ -4,7 +4,7 @@ import io.kafbat.ui.api.AclsApi;
 import io.kafbat.ui.mapper.ClusterMapper;
 import io.kafbat.ui.model.CreateConsumerAclDTO;
 import io.kafbat.ui.model.CreateProducerAclDTO;
-import io.kafbat.ui.model.CreateStreamAppAclDTO;
+// import io.kafbat.ui.model.CreateStreamAppAclDTO;
 import io.kafbat.ui.model.KafkaAclDTO;
 import io.kafbat.ui.model.KafkaAclNamePatternTypeDTO;
 import io.kafbat.ui.model.KafkaAclResourceTypeDTO;
@@ -157,20 +157,19 @@ public  class AclsController extends AbstractController implements AclsApi, McpT
         .thenReturn(ResponseEntity.ok().build());
   }
 
-  @Override
-  public Mono<ResponseEntity<Void>> createStreamAppAcl(String clusterName,
-                                                       Mono<CreateStreamAppAclDTO> createStreamAppAclDto,
-                                                       ServerWebExchange exchange) {
-    AccessContext context = AccessContext.builder()
-        .cluster(clusterName)
-        .aclActions(AclAction.EDIT)
-        .operationName("createStreamAppAcl")
-        .build();
-
-    return validateAccess(context)
-        .then(createStreamAppAclDto)
-        .flatMap(req -> aclsService.createStreamAppAcl(getCluster(clusterName), req))
-        .doOnEach(sig -> audit(context, sig))
-        .thenReturn(ResponseEntity.ok().build());
-  }
+//   @Override
+//   public Mono<ResponseEntity<Void>> createStreamAppAcl(String clusterName,
+//                                                        Mono<CreateStreamAppAclDTO> createStreamAppAclDto,
+//                                                        ServerWebExchange exchange) {
+//     AccessContext context = AccessContext.builder()
+//         .cluster(clusterName)
+//         .aclActions(AclAction.EDIT)
+//         .operationName("createStreamAppAcl")
+//         .build();
+//
+//     return validateAccess(context)
+//         .then(Mono.error(new ValidationException("Kafka Streams Apps ACL creation is disabled")))
+//         .doOnEach(sig -> audit(context, sig))
+//         .thenReturn(ResponseEntity.ok().build());
+//   }
 }

@@ -71,14 +71,14 @@ interface AclApi {
     @body payload: CreateProducerAcl,
   ): void | ApiBadRequestResponse;
 
-  @route("/streamapp")
-  @summary("createStreamAppAcl")
-  @post
-  @operationId("createStreamAppAcl")
-  createStreamAppAcl(
-    @path clusterName: string,
-    @body payload: CreateStreamAppAcl,
-  ): void | ApiBadRequestResponse;
+  // @route("/streamapp")
+  // @summary("createStreamAppAcl")
+  // @post
+  // @operationId("createStreamAppAcl")
+  // createStreamAppAcl(
+  //   @path clusterName: string,
+  //   @body payload: CreateStreamAppAcl,
+  // ): void | ApiBadRequestResponse;
 }
 
 model KafkaAcl {

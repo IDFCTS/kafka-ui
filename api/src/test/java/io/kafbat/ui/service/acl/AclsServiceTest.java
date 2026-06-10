@@ -1,13 +1,15 @@
 package io.kafbat.ui.service.acl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.kafbat.ui.config.ClustersProperties;
+import io.kafbat.ui.exception.ValidationException;
 import io.kafbat.ui.model.CreateConsumerAclDTO;
 import io.kafbat.ui.model.CreateProducerAclDTO;
-import io.kafbat.ui.model.CreateStreamAppAclDTO;
+// import io.kafbat.ui.model.CreateStreamAppAclDTO;
 import io.kafbat.ui.model.KafkaCluster;
 import io.kafbat.ui.service.AdminClientService;
 import io.kafbat.ui.service.ReactiveAdminClient;
@@ -265,48 +267,48 @@ class AclsServiceTest {
   }
 
 
-  @Test
-  void createsStreamAppDependantAcls() {
-    ArgumentCaptor<Collection<AclBinding>> createdCaptor = captor();
-    when(adminClientMock.createAcls(createdCaptor.capture()))
-        .thenReturn(Mono.empty());
+//   @Test
+//   void createsStreamAppDependantAcls() {
+//     ArgumentCaptor<Collection<AclBinding>> createdCaptor = captor();
+//     when(adminClientMock.createAcls(createdCaptor.capture()))
+//         .thenReturn(Mono.empty());
 
-    var principalType = UUID.randomUUID().toString();
-    var principalName = UUID.randomUUID().toString();
-    var principal = String.format("%s:%s", principalType, principalName);
-    var host = UUID.randomUUID().toString();
+//     var principalType = UUID.randomUUID().toString();
+//     var principalName = UUID.randomUUID().toString();
+//     var principal = String.format("%s:%s", principalType, principalName);
+//     var host = UUID.randomUUID().toString();
 
-    aclsService.createStreamAppAcl(
-        CLUSTER,
-        new CreateStreamAppAclDTO()
-            .principal(principal)
-            .host(host)
-            .inputTopics(List.of("t1"))
-            .outputTopics(List.of("t2", "t3"))
-            .applicationId("appId1")
-    ).block();
+//     aclsService.createStreamAppAcl(
+//         CLUSTER,
+//         new CreateStreamAppAclDTO()
+//             .principal(principal)
+//             .host(host)
+//             .inputTopics(List.of("t1"))
+//             .outputTopics(List.of("t2", "t3"))
+//             .applicationId("appId1")
+//     ).block();
 
-    // Read on input topics, Write on output topics
-    // ALL on applicationId-prefixed Groups and Topics
-    Collection<AclBinding> createdBindings = createdCaptor.getValue();
-    assertThat(createdBindings)
-        .hasSize(5)
-        .contains(new AclBinding(
-            new ResourcePattern(ResourceType.TOPIC, "t1", PatternType.LITERAL),
-            new AccessControlEntry(principal, host, AclOperation.READ, AclPermissionType.ALLOW)))
-        .contains(new AclBinding(
-            new ResourcePattern(ResourceType.TOPIC, "t2", PatternType.LITERAL),
-            new AccessControlEntry(principal, host, AclOperation.WRITE, AclPermissionType.ALLOW)))
-        .contains(new AclBinding(
-            new ResourcePattern(ResourceType.TOPIC, "t3", PatternType.LITERAL),
-            new AccessControlEntry(principal, host, AclOperation.WRITE, AclPermissionType.ALLOW)))
-        .contains(new AclBinding(
-            new ResourcePattern(ResourceType.GROUP, "appId1", PatternType.PREFIXED),
-            new AccessControlEntry(principal, host, AclOperation.ALL, AclPermissionType.ALLOW)))
-        .contains(new AclBinding(
-            new ResourcePattern(ResourceType.TOPIC, "appId1", PatternType.PREFIXED),
-            new AccessControlEntry(principal, host, AclOperation.ALL, AclPermissionType.ALLOW)));
-  }
+//     // Read on input topics, Write on output topics
+//     // ALL on applicationId-prefixed Groups and Topics
+//     Collection<AclBinding> createdBindings = createdCaptor.getValue();
+//     assertThat(createdBindings)
+//         .hasSize(5)
+//         .contains(new AclBinding(
+//             new ResourcePattern(ResourceType.TOPIC, "t1", PatternType.LITERAL),
+//             new AccessControlEntry(principal, host, AclOperation.READ, AclPermissionType.ALLOW)))
+//         .contains(new AclBinding(
+//             new ResourcePattern(ResourceType.TOPIC, "t2", PatternType.LITERAL),
+//             new AccessControlEntry(principal, host, AclOperation.WRITE, AclPermissionType.ALLOW)))
+//         .contains(new AclBinding(
+//             new ResourcePattern(ResourceType.TOPIC, "t3", PatternType.LITERAL),
+//             new AccessControlEntry(principal, host, AclOperation.WRITE, AclPermissionType.ALLOW)))
+//         .contains(new AclBinding(
+//             new ResourcePattern(ResourceType.GROUP, "appId1", PatternType.PREFIXED),
+//             new AccessControlEntry(principal, host, AclOperation.ALL, AclPermissionType.ALLOW)))
+//         .contains(new AclBinding(
+//             new ResourcePattern(ResourceType.TOPIC, "appId1", PatternType.PREFIXED),
+//             new AccessControlEntry(principal, host, AclOperation.ALL, AclPermissionType.ALLOW)));
+//   }
 
 
   @Test
@@ -340,21 +342,21 @@ class AclsServiceTest {
   }
 
 
-  @Test
-  void throwsExceptionWhenCreatingStreamAppAclWithInvalidPrincipal() {
-    var principal = UUID.randomUUID().toString();
-    var host = UUID.randomUUID().toString();
-    
-    assertThat(org.assertj.core.api.Assertions.catchThrowable(() -> aclsService.createStreamAppAcl(
-        CLUSTER,
-        new CreateStreamAppAclDTO()
-            .principal(principal)
-            .host(host)
-            .inputTopics(List.of("t1"))
-            .outputTopics(List.of("t2"))
-            .applicationId("appId")
-        ).block())).isInstanceOf(IllegalArgumentException.class);
-  }
+//   @Test
+//   void throwsExceptionWhenCreatingStreamAppAclWithInvalidPrincipal() {
+//     var principal = UUID.randomUUID().toString();
+//     var host = UUID.randomUUID().toString();
+
+//     assertThat(org.assertj.core.api.Assertions.catchThrowable(() -> aclsService.createStreamAppAcl(
+//         CLUSTER,
+//         new CreateStreamAppAclDTO()
+//             .principal(principal)
+//             .host(host)
+//             .inputTopics(List.of("t1"))
+//             .outputTopics(List.of("t2"))
+//             .applicationId("appId")
+//         ).block())).isInstanceOf(IllegalArgumentException.class);
+//   }
 
 
   @Test

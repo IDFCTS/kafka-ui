@@ -14,5 +14,5 @@ export const ACLTypeOptions: SelectOption<ACLType>[] = [
   { label: 'Custom ACL', value: ACLType.CUSTOM_ACL },
   { label: 'For Consumers', value: ACLType.FOR_CONSUMERS },
   { label: 'For Producers', value: ACLType.FOR_PRODUCERS },
-  { label: 'For Kafka Stream Apps', value: ACLType.FOR_KAFKA_STREAM_APPS },
+  // { label: 'For Kafka Stream Apps', value: ACLType.FOR_KAFKA_STREAM_APPS },
 ];

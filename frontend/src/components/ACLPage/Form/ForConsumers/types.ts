@@ -7,4 +7,6 @@ export interface FormValues {
   topicsPrefix?: string;
   consumerGroups?: Option[];
   consumerGroupsPrefix?: string;
+  addAllTopics?: boolean;
+  addAllConsumerGroups?: boolean;
 }

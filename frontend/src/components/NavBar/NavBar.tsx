@@ -11,6 +11,7 @@ import { ThemeModeContext } from 'components/contexts/ThemeModeContext';
 import ProductHuntIcon from 'components/common/Icons/ProductHuntIcon';
 import { Button } from 'components/common/Button/Button';
 import MenuIcon from 'components/common/Icons/MenuIcon';
+import ExternalLinkIcon from 'components/common/Icons/ExternalLinkIcon';
 
 import { UserTimezone } from './UserTimezone/UserTimezone';
 import UserInfo from './UserInfo/UserInfo';
@@ -54,6 +55,13 @@ const options = [
 
 const NavBar: React.FC<Props> = ({ onBurgerClick }) => {
   const { themeMode, setThemeMode } = useContext(ThemeModeContext);
+  const supportUrl = window._env_?.REACT_APP_SUPPORT_URL;
+
+  const handleSupportRedirect = () => {
+    if (supportUrl) {
+      window.open(supportUrl, '_blank');
+    }
+  };
 
   return (
     <S.Navbar role="navigation" aria-label="Page Header">
@@ -65,7 +73,7 @@ const NavBar: React.FC<Props> = ({ onBurgerClick }) => {
 
           <S.Hyperlink to="/">
             <Logo />
-            kafbat UI
+            Kafka by IDFcTS
           </S.Hyperlink>
 
           <S.NavbarItem>
@@ -74,6 +82,13 @@ const NavBar: React.FC<Props> = ({ onBurgerClick }) => {
         </S.NavbarBrand>
       </S.NavbarBrand>
       <S.NavbarSocial>
+        <Button
+          buttonType="text"
+          buttonSize="S"
+          onClick={handleSupportRedirect}
+        >
+          Docs <ExternalLinkIcon />
+        </Button>
         <UserTimezone />
 
         <Select

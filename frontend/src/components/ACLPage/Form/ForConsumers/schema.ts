@@ -1,4 +1,4 @@
-import { array, object, string } from 'yup';
+import { array, boolean, object, string } from 'yup';
 
 const formSchema = object({
   principal: string().required(),
@@ -17,6 +17,8 @@ const formSchema = object({
     })
   ),
   consumerGroupsPrefix: string(),
+  addAllTopics: boolean(),
+  addAllConsumerGroups: boolean(),
 });
 
 export default formSchema;

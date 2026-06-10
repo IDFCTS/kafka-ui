@@ -7,6 +7,9 @@ import {
 declare global {
   interface Window {
     basePath: string;
+    _env_?: {
+      REACT_APP_SUPPORT_URL?: string;
+    };
   }
 }
 
