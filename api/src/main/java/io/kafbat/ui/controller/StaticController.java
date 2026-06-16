@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -22,6 +23,8 @@ public class StaticController {
   private Resource indexFile;
   @Value("classpath:static/manifest.json")
   private Resource manifestFile;
+  @Value("${REACT_APP_SUPPORT_URL:}")
+  private String supportUrl;
 
   private final AtomicReference<String> renderedIndexFile = new AtomicReference<>();
   private final AtomicReference<String> renderedManifestFile = new AtomicReference<>();
@@ -54,6 +57,14 @@ public class StaticController {
   private String buildFile(Resource file, String contextPath) {
     return ResourceUtil.readAsString(file)
         .replace("\"assets/", "\"" + contextPath + "/assets/")
-        .replace("PUBLIC-PATH-VARIABLE",  contextPath);
+        .replace("PUBLIC-PATH-VARIABLE", contextPath)
+        .replace("ENV_CONFIG_PLACEHOLDER", buildEnvConfig());
+  }
+
+  private String buildEnvConfig() {
+    if (!StringUtils.hasText(supportUrl)) {
+      return "undefined";
+    }
+    return "{\"REACT_APP_SUPPORT_URL\":\"" + supportUrl.replace("\"", "\\\"") + "\"}";
   }
 }

@@ -38,10 +38,19 @@ public class StaticFileWebFilter implements WebFilter {
     }
 
     try {
-      this.contents = ResourceUtil.readAsString(resource);
+      this.contents = ResourceUtil.readAsString(resource)
+          .replace("ENV_CONFIG_PLACEHOLDER", buildEnvConfig());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static String buildEnvConfig() {
+    String supportUrl = System.getenv("REACT_APP_SUPPORT_URL");
+    if (supportUrl == null || supportUrl.isBlank()) {
+      return "undefined";
+    }
+    return "{\"REACT_APP_SUPPORT_URL\":\"" + supportUrl.replace("\"", "\\\"") + "\"}";
   }
 
   @Override
