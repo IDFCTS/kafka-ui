@@ -56,10 +56,17 @@ const options = [
 const NavBar: React.FC<Props> = ({ onBurgerClick }) => {
   const { themeMode, setThemeMode } = useContext(ThemeModeContext);
   const supportUrl = window._env_?.REACT_APP_SUPPORT_URL;
+  const teamDocsUrl = window._env_?.REACT_APP_TEAM_DOCS_URL;
 
   const handleSupportRedirect = () => {
     if (supportUrl) {
       window.open(supportUrl, '_blank');
+    }
+  };
+
+  const handleTeamDocsRedirect = () => {
+    if (teamDocsUrl) {
+      window.open(teamDocsUrl, '_blank');
     }
   };
 
@@ -87,8 +94,17 @@ const NavBar: React.FC<Props> = ({ onBurgerClick }) => {
           buttonSize="S"
           onClick={handleSupportRedirect}
         >
-          Docs <ExternalLinkIcon />
+          Official Docs <ExternalLinkIcon />
         </Button>
+        {teamDocsUrl && (
+          <Button
+            buttonType="text"
+            buttonSize="S"
+            onClick={handleTeamDocsRedirect}
+          >
+            Team Docs <ExternalLinkIcon />
+          </Button>
+        )}
         <UserTimezone />
 
         <Select

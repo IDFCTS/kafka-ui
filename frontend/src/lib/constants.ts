@@ -9,6 +9,7 @@ declare global {
     basePath: string;
     _env_?: {
       REACT_APP_SUPPORT_URL?: string;
+      REACT_APP_TEAM_DOCS_URL?: string;
     };
   }
 }

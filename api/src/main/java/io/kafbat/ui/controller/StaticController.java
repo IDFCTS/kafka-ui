@@ -1,6 +1,10 @@
 package io.kafbat.ui.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kafbat.ui.util.ResourceUtil;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -25,6 +29,10 @@ public class StaticController {
   private Resource manifestFile;
   @Value("${REACT_APP_SUPPORT_URL:}")
   private String supportUrl;
+  @Value("${REACT_APP_TEAM_DOCS_URL:}")
+  private String teamDocsUrl;
+
+  private final ObjectMapper objectMapper;
 
   private final AtomicReference<String> renderedIndexFile = new AtomicReference<>();
   private final AtomicReference<String> renderedManifestFile = new AtomicReference<>();
@@ -58,13 +66,22 @@ public class StaticController {
     return ResourceUtil.readAsString(file)
         .replace("\"assets/", "\"" + contextPath + "/assets/")
         .replace("PUBLIC-PATH-VARIABLE", contextPath)
-        .replace("ENV_CONFIG_PLACEHOLDER", buildEnvConfig());
+        .replace("</head>", "<script>window._env_ = " + buildEnvConfig() + ";</script></head>");
   }
 
   private String buildEnvConfig() {
-    if (!StringUtils.hasText(supportUrl)) {
-      return "undefined";
+    Map<String, String> env = new LinkedHashMap<>();
+    if (StringUtils.hasText(supportUrl)) {
+      env.put("REACT_APP_SUPPORT_URL", supportUrl);
     }
-    return "{\"REACT_APP_SUPPORT_URL\":\"" + supportUrl.replace("\"", "\\\"") + "\"}";
+    if (StringUtils.hasText(teamDocsUrl)) {
+      env.put("REACT_APP_TEAM_DOCS_URL", teamDocsUrl);
+    }
+    try {
+      return objectMapper.writeValueAsString(env);
+    } catch (JsonProcessingException e) {
+      log.warn("Failed to serialize frontend env config", e);
+      return "{}";
+    }
   }
 }
