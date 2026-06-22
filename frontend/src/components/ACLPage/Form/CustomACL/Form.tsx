@@ -1,12 +1,16 @@
-import React, { FC, useContext } from 'react';
+import React, { FC, useContext, useEffect } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { FormProvider, useForm } from 'react-hook-form';
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { useCreateCustomAcl } from 'lib/hooks/api/acl';
 import ControlledRadio from 'components/common/Radio/ControlledRadio';
 import Input from 'components/common/Input/Input';
 import ControlledSelect from 'components/common/Select/ControlledSelect';
 import { matchTypeOptions } from 'components/ACLPage/Form/constants';
-import { KafkaAclResourceType } from 'generated-sources';
 import useAppParams from 'lib/hooks/useAppParams';
 import * as S from 'components/ACLPage/Form/Form.styled';
 import ACLFormContext from 'components/ACLPage/Form/AclFormContext';
@@ -20,8 +24,41 @@ import {
   defaultValues,
   permissions,
   resourceTypes,
-  resourceTypeOperationsMap,
+  getOperationOptions,
 } from './constants';
+
+/**
+ * Renders the permission + operation controls. Kept as a separate component so
+ * that the `resourceType` / `namePatternType` subscriptions live here and not in
+ * the parent that renders the `namePatternType` radio — `ControlledRadio` fires
+ * `onChange` on every render, so subscribing to its field in the same component
+ * would create a render loop.
+ */
+const OperationControls: FC = () => {
+  const { control, getValues, setValue } = useFormContext<FormValues>();
+  const resourceType = useWatch({ control, name: 'resourceType' });
+  const namePatternType = useWatch({ control, name: 'namePatternType' });
+  const operationOptions = getOperationOptions(resourceType, namePatternType);
+
+  // Reset the selected operation whenever it is no longer valid for the current
+  // resource type / pattern combination (e.g. DELETE was picked under PREFIXED
+  // and the pattern was switched back to EXACT). Without this the Select shows a
+  // blank value while the form would still submit the stale operation.
+  useEffect(() => {
+    const current = getValues('operation');
+    if (!operationOptions.some((option) => option.value === current)) {
+      setValue('operation', operationOptions[0]?.value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resourceType, namePatternType]);
+
+  return (
+    <S.ControlList>
+      <ControlledRadio name="permission" options={permissions} />
+      <ControlledSelect options={operationOptions} name="operation" />
+    </S.ControlList>
+  );
+};
 
 const CustomACLForm: FC<AclDetailedFormProps> = ({ formRef }) => {
   const context = useContext(ACLFormContext);
@@ -43,13 +80,6 @@ const CustomACLForm: FC<AclDetailedFormProps> = ({ formRef }) => {
     } catch (e) {
       // no custom error
     }
-  };
-
-  const resourceType = methods.watch('resourceType');
-  const operationOptions = resourceTypeOperationsMap[resourceType];
-
-  const onResourceTypeChange = (newType: KafkaAclResourceType) => {
-    methods.setValue('operation', resourceTypeOperationsMap[newType][0]?.value);
   };
 
   return (
@@ -74,19 +104,12 @@ const CustomACLForm: FC<AclDetailedFormProps> = ({ formRef }) => {
 
         <S.Field>
           <S.Label htmlFor="resourceType">Resource type</S.Label>
-          <ControlledSelect
-            options={resourceTypes}
-            name="resourceType"
-            onChange={onResourceTypeChange as unknown as (val: unknown) => void}
-          />
+          <ControlledSelect options={resourceTypes} name="resourceType" />
         </S.Field>
 
         <S.Field>
           <S.Label>Operations</S.Label>
-          <S.ControlList>
-            <ControlledRadio name="permission" options={permissions} />
-            <ControlledSelect options={operationOptions} name="operation" />
-          </S.ControlList>
+          <OperationControls />
         </S.Field>
 
         <S.Field>

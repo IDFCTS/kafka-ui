@@ -5,6 +5,7 @@ import {
   KafkaAclResourceType,
 } from 'generated-sources';
 import { RadioOption } from 'components/common/Radio/types';
+import { MatchType } from 'components/ACLPage/Form/types';
 
 import { FormValues } from './types';
 
@@ -66,6 +67,31 @@ export const resourceTypeOperationsMap: Record<
   [KafkaAclResourceType.USER]: operations,
 };
 
+/**
+ * Returns the operation options available for a given resource type and matching
+ * pattern. `DELETE` is offered for `TOPIC` only when the pattern is `PREFIXED`
+ * (matching the supported workflow of granting delete on prefix-matched topics).
+ */
+export const getOperationOptions = (
+  resourceType: KafkaAclResourceType,
+  namePatternType?: MatchType
+): SelectOption<KafkaAclOperationEnum>[] => {
+  const base = resourceTypeOperationsMap[resourceType] ?? [];
+  if (
+    resourceType === KafkaAclResourceType.TOPIC &&
+    namePatternType === MatchType.PREFIXED
+  ) {
+    return [
+      ...base,
+      {
+        label: KafkaAclOperationEnum.DELETE,
+        value: KafkaAclOperationEnum.DELETE,
+      },
+    ];
+  }
+  return base;
+};
+
 export const permissions: RadioOption[] = [
   {
     value: KafkaAclPermissionEnum.ALLOW,
@@ -81,6 +107,7 @@ const defaultResourceType = resourceTypes[0].value as KafkaAclResourceType;
 
 export const defaultValues: Partial<FormValues> = {
   resourceType: defaultResourceType,
+  namePatternType: MatchType.EXACT,
   operation: resourceTypeOperationsMap[defaultResourceType][0]
     .value as KafkaAclOperationEnum,
 };
