@@ -68,9 +68,18 @@ export const resourceTypeOperationsMap: Record<
 };
 
 /**
+ * Operations offered for `TOPIC` only when the pattern is `PREFIXED` (matching the
+ * supported workflow of managing a family of prefix-matched topics).
+ */
+const prefixedOnlyTopicOperations: KafkaAclOperationEnum[] = [
+  KafkaAclOperationEnum.DELETE,
+  KafkaAclOperationEnum.ALTER_CONFIGS,
+];
+
+/**
  * Returns the operation options available for a given resource type and matching
- * pattern. `DELETE` is offered for `TOPIC` only when the pattern is `PREFIXED`
- * (matching the supported workflow of granting delete on prefix-matched topics).
+ * pattern. `DELETE` and `ALTER_CONFIGS` are offered for `TOPIC` only when the pattern
+ * is `PREFIXED`.
  */
 export const getOperationOptions = (
   resourceType: KafkaAclResourceType,
@@ -83,10 +92,10 @@ export const getOperationOptions = (
   ) {
     return [
       ...base,
-      {
-        label: KafkaAclOperationEnum.DELETE,
-        value: KafkaAclOperationEnum.DELETE,
-      },
+      ...prefixedOnlyTopicOperations.map((operation) => ({
+        label: operation,
+        value: operation,
+      })),
     ];
   }
   return base;

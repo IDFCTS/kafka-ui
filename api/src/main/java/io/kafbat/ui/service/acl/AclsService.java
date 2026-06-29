@@ -1,6 +1,8 @@
 package io.kafbat.ui.service.acl;
 
+import static org.apache.kafka.common.acl.AclOperation.ALTER_CONFIGS;
 import static org.apache.kafka.common.acl.AclOperation.CREATE;
+import static org.apache.kafka.common.acl.AclOperation.DELETE;
 import static org.apache.kafka.common.acl.AclOperation.DESCRIBE;
 import static org.apache.kafka.common.acl.AclOperation.DESCRIBE_CONFIGS;
 import static org.apache.kafka.common.acl.AclOperation.IDEMPOTENT_WRITE;
@@ -61,6 +63,11 @@ public class AclsService {
           TRANSACTIONAL_ID, Set.of(DESCRIBE, WRITE),
           CLUSTER, Set.of(DESCRIBE, IDEMPOTENT_WRITE));
 
+  // Operations permitted on TOPIC only when the resource pattern is PREFIXED
+  // (e.g. managing a whole family of prefix-matched topics, not a single literal one)
+  private static final Set<AclOperation> CUSTOM_ACL_PREFIXED_ONLY_TOPIC_OPERATIONS =
+      Set.of(DELETE, ALTER_CONFIGS);
+
   private final AdminClientService adminClientService;
   private final ClustersProperties clustersProperties;
 
@@ -86,11 +93,24 @@ public class AclsService {
       throw new ValidationException("Custom ACL creation is not allowed for resource type " + resourceType);
     }
 
-    Set<AclOperation> allowedOps = CUSTOM_ACL_ALLOWED_OPERATIONS.get(resourceType);
-    if (allowedOps == null || !allowedOps.contains(operation)) {
+    if (!isCustomAclOperationAllowed(aclBinding)) {
       throw new ValidationException(
           "Custom ACL operation " + operation + " is not allowed for resource type " + resourceType);
     }
+  }
+
+  private static boolean isCustomAclOperationAllowed(AclBinding aclBinding) {
+    ResourceType resourceType = aclBinding.pattern().resourceType();
+    AclOperation operation = aclBinding.entry().operation();
+
+    // DELETE / ALTER_CONFIGS are permitted on TOPIC only for PREFIXED patterns
+    // (e.g. managing a family of prefix-matched topics, not a single literal one)
+    if (resourceType == TOPIC && CUSTOM_ACL_PREFIXED_ONLY_TOPIC_OPERATIONS.contains(operation)) {
+      return aclBinding.pattern().patternType() == PREFIXED;
+    }
+
+    Set<AclOperation> allowedOps = CUSTOM_ACL_ALLOWED_OPERATIONS.get(resourceType);
+    return allowedOps != null && allowedOps.contains(operation);
   }
 
   public Mono<Void> createAcl(KafkaCluster cluster, AclBinding aclBinding) {

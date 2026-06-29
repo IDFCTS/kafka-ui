@@ -27,6 +27,8 @@ import org.apache.kafka.common.resource.ResourcePatternFilter;
 import org.apache.kafka.common.resource.ResourceType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Mono;
 
@@ -363,13 +365,45 @@ class AclsServiceTest {
   void throwsExceptionWhenCreatingAclWithInvalidPrincipal() {
     var principal = UUID.randomUUID().toString();
     var host = UUID.randomUUID().toString();
-    
+
     assertThat(org.assertj.core.api.Assertions.catchThrowable(() -> aclsService.createAcl(
         CLUSTER,
         new AclBinding(
             new ResourcePattern(ResourceType.TOPIC, "t1", PatternType.LITERAL),
             new AccessControlEntry(principal, host, AclOperation.READ, AclPermissionType.ALLOW))
         ).block())).isInstanceOf(IllegalArgumentException.class);
+  }
+
+
+  // DELETE and ALTER_CONFIGS are allowed on TOPIC only for PREFIXED patterns
+  @ParameterizedTest
+  @EnumSource(value = AclOperation.class, names = {"DELETE", "ALTER_CONFIGS"})
+  void createsCustomAclWithPrefixedOnlyOperationOnPrefixedTopic(AclOperation operation) {
+    ArgumentCaptor<Collection<AclBinding>> createdCaptor = captor();
+    when(adminClientMock.createAcls(createdCaptor.capture()))
+        .thenReturn(Mono.empty());
+
+    var binding = new AclBinding(
+        new ResourcePattern(ResourceType.TOPIC, "topicPref", PatternType.PREFIXED),
+        new AccessControlEntry("User:test", "*", operation, AclPermissionType.ALLOW));
+
+    aclsService.createAcl(CLUSTER, binding).block();
+
+    assertThat(createdCaptor.getValue())
+        .hasSize(1)
+        .contains(binding);
+  }
+
+
+  @ParameterizedTest
+  @EnumSource(value = AclOperation.class, names = {"DELETE", "ALTER_CONFIGS"})
+  void throwsExceptionWhenCreatingCustomAclWithPrefixedOnlyOperationOnLiteralTopic(AclOperation operation) {
+    var binding = new AclBinding(
+        new ResourcePattern(ResourceType.TOPIC, "topic1", PatternType.LITERAL),
+        new AccessControlEntry("User:test", "*", operation, AclPermissionType.ALLOW));
+
+    assertThat(catchThrowable(() -> aclsService.createAcl(CLUSTER, binding).block()))
+        .isInstanceOf(ValidationException.class);
   }
 
 

@@ -32,20 +32,26 @@ describe('CustomACLForm', () => {
   const getResourceTypeSelect = () => screen.getAllByRole('listbox')[0];
   const getOperationSelect = () => screen.getAllByRole('listbox')[1];
 
-  it('does not offer DELETE for a TOPIC with the EXACT pattern (default)', async () => {
+  it('does not offer DELETE or ALTER_CONFIGS for a TOPIC with the EXACT pattern (default)', async () => {
     renderComponent();
     await userEvent.click(getOperationSelect());
     expect(
       within(getOperationSelect()).queryByText('DELETE')
     ).not.toBeInTheDocument();
+    expect(
+      within(getOperationSelect()).queryByText('ALTER_CONFIGS')
+    ).not.toBeInTheDocument();
   });
 
-  it('offers DELETE for a TOPIC when the PREFIXED pattern is selected', async () => {
+  it('offers DELETE and ALTER_CONFIGS for a TOPIC when the PREFIXED pattern is selected', async () => {
     renderComponent();
     await userEvent.click(screen.getByText('PREFIXED'));
     await userEvent.click(getOperationSelect());
     expect(
       within(getOperationSelect()).getByText('DELETE')
+    ).toBeInTheDocument();
+    expect(
+      within(getOperationSelect()).getByText('ALTER_CONFIGS')
     ).toBeInTheDocument();
   });
 
@@ -64,7 +70,7 @@ describe('CustomACLForm', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('does not offer DELETE for a non-TOPIC resource even with PREFIXED', async () => {
+  it('does not offer DELETE or ALTER_CONFIGS for a non-TOPIC resource even with PREFIXED', async () => {
     renderComponent();
     await userEvent.click(getResourceTypeSelect());
     await userEvent.selectOptions(getResourceTypeSelect(), ['GROUP']);
@@ -72,6 +78,9 @@ describe('CustomACLForm', () => {
     await userEvent.click(getOperationSelect());
     expect(
       within(getOperationSelect()).queryByText('DELETE')
+    ).not.toBeInTheDocument();
+    expect(
+      within(getOperationSelect()).queryByText('ALTER_CONFIGS')
     ).not.toBeInTheDocument();
   });
 });
