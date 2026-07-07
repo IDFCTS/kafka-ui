@@ -226,6 +226,50 @@ class AclsServiceTest {
 
 
   @Test
+  void createsProducerDependantAclsWithWildcardTransactionalIdWhenTxIdNotSpecified() {
+    ArgumentCaptor<Collection<AclBinding>> createdCaptor = captor();
+    when(adminClientMock.createAcls(createdCaptor.capture()))
+        .thenReturn(Mono.empty());
+
+    var principalType = UUID.randomUUID().toString();
+    var principalName = UUID.randomUUID().toString();
+    var principal = String.format("%s:%s", principalType, principalName);
+    var host = UUID.randomUUID().toString();
+
+    aclsService.createProducerAcl(
+        CLUSTER,
+        new CreateProducerAclDTO()
+            .principal(principal)
+            .host(host)
+            .topics(List.of("t1"))
+            .idempotent(false)
+    ).block();
+
+    // No transactional id specified -> allow all transactional ids (wildcard)
+    Collection<AclBinding> createdBindings = createdCaptor.getValue();
+    assertThat(createdBindings)
+        .hasSize(5)
+        .contains(new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, "t1", PatternType.LITERAL),
+            new AccessControlEntry(principal, host, AclOperation.WRITE, AclPermissionType.ALLOW)))
+        .contains(new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, "t1", PatternType.LITERAL),
+            new AccessControlEntry(principal, host, AclOperation.DESCRIBE, AclPermissionType.ALLOW)))
+        .contains(new AclBinding(
+            new ResourcePattern(ResourceType.TOPIC, "t1", PatternType.LITERAL),
+            new AccessControlEntry(principal, host, AclOperation.CREATE, AclPermissionType.ALLOW)))
+        .contains(new AclBinding(
+            new ResourcePattern(ResourceType.TRANSACTIONAL_ID, ResourcePattern.WILDCARD_RESOURCE,
+                PatternType.LITERAL),
+            new AccessControlEntry(principal, host, AclOperation.WRITE, AclPermissionType.ALLOW)))
+        .contains(new AclBinding(
+            new ResourcePattern(ResourceType.TRANSACTIONAL_ID, ResourcePattern.WILDCARD_RESOURCE,
+                PatternType.LITERAL),
+            new AccessControlEntry(principal, host, AclOperation.DESCRIBE, AclPermissionType.ALLOW)));
+  }
+
+
+  @Test
   void createsProducerDependantAclsWhenTopicsAndTxIdSpecifiedByPrefix() {
     ArgumentCaptor<Collection<AclBinding>> createdCaptor = captor();
     when(adminClientMock.createAcls(createdCaptor.capture()))

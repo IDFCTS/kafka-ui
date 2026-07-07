@@ -138,6 +138,9 @@ const ForProducersForm: FC<AclDetailedFormProps> = ({ formRef }) => {
               onChange={onTransactionIdTypeChange}
             />
           </S.ControlList>
+          <span style={{ fontSize: '0.9rem', color: '#8c8c8c' }}>
+            Optional: leave empty to allow all transaction IDs
+          </span>
         </S.Field>
         <hr />
         <Checkbox

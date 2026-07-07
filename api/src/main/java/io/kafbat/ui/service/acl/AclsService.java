@@ -71,6 +71,11 @@ public class AclsService {
   private final AdminClientService adminClientService;
   private final ClustersProperties clustersProperties;
 
+  @Nullable
+  private static String blankToNull(@Nullable String value) {
+    return (value == null || value.isBlank()) ? null : value;
+  }
+
   private void validatePrincipal(String principal) {
     if (principal == null || principal.isEmpty()) {
       throw new IllegalArgumentException(
@@ -269,14 +274,29 @@ public class AclsService {
             request.getTopicsPrefix(),
             request.getTopics()));
 
-    bindings.addAll(
-        createAllowBindings(
-            TRANSACTIONAL_ID,
-            List.of(WRITE, DESCRIBE),
-            request.getPrincipal(),
-            request.getHost(),
-            request.getTransactionsIdPrefix(),
-            Optional.ofNullable(request.getTransactionalId()).map(List::of).orElse(null)));
+    String transactionalId = blankToNull(request.getTransactionalId());
+    String transactionsIdPrefix = blankToNull(request.getTransactionsIdPrefix());
+
+    if (transactionalId == null && transactionsIdPrefix == null) {
+      // No transactional id restriction was specified - allow all transactional ids
+      bindings.addAll(
+          createAllowBindings(
+              TRANSACTIONAL_ID,
+              List.of(WRITE, DESCRIBE),
+              request.getPrincipal(),
+              request.getHost(),
+              null,
+              List.of(ResourcePattern.WILDCARD_RESOURCE)));
+    } else {
+      bindings.addAll(
+          createAllowBindings(
+              TRANSACTIONAL_ID,
+              List.of(WRITE, DESCRIBE),
+              request.getPrincipal(),
+              request.getHost(),
+              transactionsIdPrefix,
+              Optional.ofNullable(transactionalId).map(List::of).orElse(null)));
+    }
 
     if (Boolean.TRUE.equals(request.getIdempotent())) {
       bindings.addAll(
