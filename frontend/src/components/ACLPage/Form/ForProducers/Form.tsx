@@ -5,6 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import useAppParams from 'lib/hooks/useAppParams';
 import { ClusterName } from 'lib/interfaces/cluster';
 import Input from 'components/common/Input/Input';
+import { InputHint } from 'components/common/Input/Input.styled';
 import ControlledMultiSelect from 'components/common/MultiSelect/ControlledMultiSelect';
 import Checkbox from 'components/common/Checkbox/Checkbox';
 import * as S from 'components/ACLPage/Form/Form.styled';
@@ -138,10 +139,8 @@ const ForProducersForm: FC<AclDetailedFormProps> = ({ formRef }) => {
               onChange={onTransactionIdTypeChange}
             />
           </S.ControlList>
-          <span style={{ fontSize: '0.9rem', color: '#8c8c8c' }}>
-            Optional: leave empty to allow all transaction IDs
-          </span>
         </S.Field>
+        <InputHint>Optional: leave empty to allow all transaction IDs</InputHint>
         <hr />
         <Checkbox
           name="idempotent"
