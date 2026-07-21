@@ -63,10 +63,14 @@ public class AclsService {
           TRANSACTIONAL_ID, Set.of(DESCRIBE, WRITE),
           CLUSTER, Set.of(DESCRIBE, IDEMPOTENT_WRITE));
 
-  // Operations permitted on TOPIC only when the resource pattern is PREFIXED
-  // (e.g. managing a whole family of prefix-matched topics, not a single literal one)
-  private static final Set<AclOperation> CUSTOM_ACL_PREFIXED_ONLY_TOPIC_OPERATIONS =
-      Set.of(DELETE, ALTER_CONFIGS);
+  // Operations permitted only when the resource pattern is PREFIXED
+  // (e.g. managing a whole family of prefix-matched resources, not a single literal one):
+  // - TOPIC: DELETE, ALTER_CONFIGS
+  // - GROUP: DELETE
+  private static final Map<ResourceType, Set<AclOperation>> CUSTOM_ACL_PREFIXED_ONLY_OPERATIONS =
+      Map.of(
+          TOPIC, Set.of(DELETE, ALTER_CONFIGS),
+          GROUP, Set.of(DELETE));
 
   private final AdminClientService adminClientService;
   private final ClustersProperties clustersProperties;
@@ -108,9 +112,11 @@ public class AclsService {
     ResourceType resourceType = aclBinding.pattern().resourceType();
     AclOperation operation = aclBinding.entry().operation();
 
-    // DELETE / ALTER_CONFIGS are permitted on TOPIC only for PREFIXED patterns
-    // (e.g. managing a family of prefix-matched topics, not a single literal one)
-    if (resourceType == TOPIC && CUSTOM_ACL_PREFIXED_ONLY_TOPIC_OPERATIONS.contains(operation)) {
+    // Some operations are permitted only for PREFIXED patterns
+    // (e.g. managing a family of prefix-matched resources, not a single literal one):
+    // DELETE / ALTER_CONFIGS on TOPIC, DELETE on GROUP.
+    Set<AclOperation> prefixedOnlyOps = CUSTOM_ACL_PREFIXED_ONLY_OPERATIONS.get(resourceType);
+    if (prefixedOnlyOps != null && prefixedOnlyOps.contains(operation)) {
       return aclBinding.pattern().patternType() == PREFIXED;
     }
 

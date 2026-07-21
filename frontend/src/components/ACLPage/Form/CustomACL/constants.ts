@@ -68,31 +68,36 @@ export const resourceTypeOperationsMap: Record<
 };
 
 /**
- * Operations offered for `TOPIC` only when the pattern is `PREFIXED` (matching the
- * supported workflow of managing a family of prefix-matched topics).
+ * Operations offered only when the pattern is `PREFIXED` (matching the supported
+ * workflow of managing a family of prefix-matched resources), keyed by resource type:
+ * - `TOPIC`: `DELETE` and `ALTER_CONFIGS`
+ * - `GROUP`: `DELETE`
  */
-const prefixedOnlyTopicOperations: KafkaAclOperationEnum[] = [
-  KafkaAclOperationEnum.DELETE,
-  KafkaAclOperationEnum.ALTER_CONFIGS,
-];
+const prefixedOnlyOperations: Partial<
+  Record<KafkaAclResourceType, KafkaAclOperationEnum[]>
+> = {
+  [KafkaAclResourceType.TOPIC]: [
+    KafkaAclOperationEnum.DELETE,
+    KafkaAclOperationEnum.ALTER_CONFIGS,
+  ],
+  [KafkaAclResourceType.GROUP]: [KafkaAclOperationEnum.DELETE],
+};
 
 /**
  * Returns the operation options available for a given resource type and matching
- * pattern. `DELETE` and `ALTER_CONFIGS` are offered for `TOPIC` only when the pattern
- * is `PREFIXED`.
+ * pattern. The prefixed-only operations (see `prefixedOnlyOperations`) are appended
+ * only when the pattern is `PREFIXED`.
  */
 export const getOperationOptions = (
   resourceType: KafkaAclResourceType,
   namePatternType?: MatchType
 ): SelectOption<KafkaAclOperationEnum>[] => {
   const base = resourceTypeOperationsMap[resourceType] ?? [];
-  if (
-    resourceType === KafkaAclResourceType.TOPIC &&
-    namePatternType === MatchType.PREFIXED
-  ) {
+  const prefixedOnly = prefixedOnlyOperations[resourceType];
+  if (prefixedOnly && namePatternType === MatchType.PREFIXED) {
     return [
       ...base,
-      ...prefixedOnlyTopicOperations.map((operation) => ({
+      ...prefixedOnly.map((operation) => ({
         label: operation,
         value: operation,
       })),

@@ -70,10 +70,34 @@ describe('CustomACLForm', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('does not offer DELETE or ALTER_CONFIGS for a non-TOPIC resource even with PREFIXED', async () => {
+  it('offers DELETE (but not ALTER_CONFIGS) for a GROUP when the PREFIXED pattern is selected', async () => {
     renderComponent();
     await userEvent.click(getResourceTypeSelect());
     await userEvent.selectOptions(getResourceTypeSelect(), ['GROUP']);
+    await userEvent.click(screen.getByText('PREFIXED'));
+    await userEvent.click(getOperationSelect());
+    expect(
+      within(getOperationSelect()).getByText('DELETE')
+    ).toBeInTheDocument();
+    expect(
+      within(getOperationSelect()).queryByText('ALTER_CONFIGS')
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not offer DELETE for a GROUP with the EXACT pattern (default)', async () => {
+    renderComponent();
+    await userEvent.click(getResourceTypeSelect());
+    await userEvent.selectOptions(getResourceTypeSelect(), ['GROUP']);
+    await userEvent.click(getOperationSelect());
+    expect(
+      within(getOperationSelect()).queryByText('DELETE')
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not offer DELETE or ALTER_CONFIGS for a non-TOPIC/GROUP resource even with PREFIXED', async () => {
+    renderComponent();
+    await userEvent.click(getResourceTypeSelect());
+    await userEvent.selectOptions(getResourceTypeSelect(), ['TRANSACTIONAL_ID']);
     await userEvent.click(screen.getByText('PREFIXED'));
     await userEvent.click(getOperationSelect());
     expect(

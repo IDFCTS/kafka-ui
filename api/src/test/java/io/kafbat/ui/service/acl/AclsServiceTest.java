@@ -451,6 +451,48 @@ class AclsServiceTest {
   }
 
 
+  // DELETE is allowed on GROUP only for PREFIXED patterns
+  @Test
+  void createsCustomAclWithDeleteOnPrefixedGroup() {
+    ArgumentCaptor<Collection<AclBinding>> createdCaptor = captor();
+    when(adminClientMock.createAcls(createdCaptor.capture()))
+        .thenReturn(Mono.empty());
+
+    var binding = new AclBinding(
+        new ResourcePattern(ResourceType.GROUP, "groupPref", PatternType.PREFIXED),
+        new AccessControlEntry("User:test", "*", AclOperation.DELETE, AclPermissionType.ALLOW));
+
+    aclsService.createAcl(CLUSTER, binding).block();
+
+    assertThat(createdCaptor.getValue())
+        .hasSize(1)
+        .contains(binding);
+  }
+
+
+  @Test
+  void throwsExceptionWhenCreatingCustomAclWithDeleteOnLiteralGroup() {
+    var binding = new AclBinding(
+        new ResourcePattern(ResourceType.GROUP, "group1", PatternType.LITERAL),
+        new AccessControlEntry("User:test", "*", AclOperation.DELETE, AclPermissionType.ALLOW));
+
+    assertThat(catchThrowable(() -> aclsService.createAcl(CLUSTER, binding).block()))
+        .isInstanceOf(ValidationException.class);
+  }
+
+
+  // ALTER_CONFIGS is not a valid GROUP operation, even for PREFIXED patterns
+  @Test
+  void throwsExceptionWhenCreatingCustomAclWithAlterConfigsOnPrefixedGroup() {
+    var binding = new AclBinding(
+        new ResourcePattern(ResourceType.GROUP, "groupPref", PatternType.PREFIXED),
+        new AccessControlEntry("User:test", "*", AclOperation.ALTER_CONFIGS, AclPermissionType.ALLOW));
+
+    assertThat(catchThrowable(() -> aclsService.createAcl(CLUSTER, binding).block()))
+        .isInstanceOf(ValidationException.class);
+  }
+
+
   @SuppressWarnings("unchecked")
   private ArgumentCaptor<Collection<AclBinding>> captor() {
     return ArgumentCaptor.forClass(Collection.class);

@@ -77,6 +77,13 @@ Kafka Connect connectors list.
 - **DELETE / ALTER_CONFIGS for PREFIXED topic ACLs** — the Custom ACL form
   allows the `DELETE` and `ALTER_CONFIGS` operations on `PREFIXED` topic
   resource patterns.
+- **DELETE for PREFIXED group ACLs** — the Custom ACL form allows the `DELETE`
+  operation on `PREFIXED` `GROUP` resource patterns (mirrors the topic behavior;
+  `ALTER_CONFIGS` is intentionally not offered for groups as it is not a valid
+  group operation). Gated in both the frontend (`getOperationOptions` /
+  `prefixedOnlyOperations` in `CustomACL/constants.ts`) and the backend
+  (`CUSTOM_ACL_PREFIXED_ONLY_OPERATIONS` / `isCustomAclOperationAllowed` in
+  `AclsService.java`).
 - **Optional Transaction ID for producer ACLs** — leaving the Transaction ID
   empty in the "For Producers" flow grants all transactional IDs (allow-all)
   instead of being required. Includes a themed `InputHint` explaining this.
@@ -136,3 +143,4 @@ files reset during the `v1.5.0` port.
 | Date | Area | Summary |
 |------|------|---------|
 | 2026-07-21 | Table refresh | Ported the controllable-table-refresh feature from the kafbat PR onto `prod-cts` (with the `topics-list-refresh-rate` collision fix). |
+| 2026-07-21 | Custom ACL | Allow `DELETE` on `PREFIXED` `GROUP` resource patterns in the Custom ACL form (frontend + backend), mirroring the existing prefixed-TOPIC behavior. |
